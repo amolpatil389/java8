@@ -1,0 +1,153 @@
+in28minutes
+
+--------------------------------------------------------
+Java 8 = 6.5
+--------------------------------------------------------
+
+Spring boot  = 17
+
+Hibernate = 14
+
+10.189.177.112/svn/MFP_to_APIC_Migration/branches/UAT
+
+
+
+Java 8
+
+Reduce ----> This method is used to perform reduction on the element, basically it combines element into single element
+
+
+reduce((x,y)->x+y)
+
+Imp ====>{ Practice using Jshell 3 --> 14 }
+
+
+**********distinct, sorted***********************
+
+distinct ----> This will print all the unique values from the input
+
+sorted ----> this will sort the values in asc or dsc order
+
+
+H/W : find Duplicate element from a List
+
+
+Java Intermediate and Terminal Opration
+
+Intermediate Operation : The Operation that are perform on the STREAM and Return stream back are called as Intermediate Operation 
+                          example : filter, MAP,distinct,sorted
+						  
+
+Terminal Operations : 
+
+**********************************************************************
+                  29/05/2025 FUNCTIONAL INTERFACES
+**********************************************************************
+
+Functional Interface ?
+
+A Functional Interface is something which has one Abstract Method
+
+There are few classes behind Lambda Expression :
+
+1.Predicate
+
+a Predicate is a functional interface that represents a boolean-valued function, taking one argument and returning either true or false. It's primarily used for filtering elements from collections based on a specific condition.
+
+Example : Filtering,Lambda Expressions, Boolean Result; 
+
+
+2.FUNCTION :
+
+
+3.Consumer :
+
+4. Supplier :
+
+
+*****************************************************************************
+                            30/05/2025
+*****************************************************************************
+
+AllMatch , NoneMatch, AnyMatch = 
+
+This three function will return bollean value depends on the condition
+
+
+--> Sorting Courses with predefine Criteria
+
+1. Using Compartor 
+
+Comparator<Course> comparingByNoOfStudents = Comparator.comparing(Course::getNoOfStudents); // This comparator
+
+
+List<Course> newCourse =  courses.stream().sorted(comparingByNoOfStudents).collect(Collectors.toList());
+		
+		System.out.println("Course in AESC Order");
+		
+		System.out.println(newCourse);
+		
+		
+Comparator<Course> comparingByNoOfStudents = Comparator.comparing(Course::getNoOfStudents).reversed(); // This comparator for DESC
+
+
+List<Course> newCourse =  courses.stream().sorted(comparingByNoOfStudents).collect(Collectors.toList());
+		
+		System.out.println("Course in DESC Order");
+		
+		System.out.println(newCourse);
+		
+		
+---------------------------------------------------------------------------------------------------------------------		
+2.One logic is been Implemented condition is {If Review Score is greater than 91 then increase Review Score by +2}
+
+
+course.stream.filter(x->x.getReviewScore()>91).forEach(x->x.setReviewScore(x.setReviewScore()+2);
+
+courses.forEach(System.out::println);
+
+--------------------------------------------------------------------------------------------------------------------------
+2. PART 2 (By Using MAP operator This will return LIST)
+
+List<Course> newList = courses.stream().map(
+                                          x->{
+										  if(x.getReviewScore()>91)
+										  {
+											return new Course(course.getName(), course.getCategory(), course.getReviewScore()+2, course.getNoOfStudents());
+										  }
+										  else
+										 {
+										  return course;
+										 }
+										                   }
+											
+												).collect(Collectors.toList());
+												
+	System.out.println(newList)
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+allMatch(),noneMatch and anyMatch ask chatGPT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
