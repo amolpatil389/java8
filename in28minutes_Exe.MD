@@ -18,7 +18,7 @@ Print the cubes of odd numbers
 Exercise 6
 Print the number of characters in each course name
 
-Exercise 7
+Exercise 7 (Using Reduce function)
 Square every number in a list and find the sum of squares
 
 Exercise 8
