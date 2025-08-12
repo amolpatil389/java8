@@ -1,4 +1,4 @@
-in28minutes
+#in28minutes
 
 --------------------------------------------------------
 Java 8 = 6.5
@@ -96,6 +96,14 @@ List<Course> newCourse =  courses.stream().sorted(comparingByNoOfStudents).colle
 		System.out.println("Course in DESC Order");
 		
 		System.out.println(newCourse);
+
+------------------------------ComparingBoth fields together using Comparator----------------------------------------
+
+Comparator<Course> comparaingBoth_NoOfStudents_NoOfReviews = Comparator.comparing(Course::getNoOfStudent).thenComparing(Course::getReviewScore).reversed();
+		
+		List<Course> comparingBoth = courses.stream().sorted(comparaingBoth_NoOfStudents_NoOfReviews).collect(Collectors.toList());
+		
+		System.out.println("comparingBoth = "+comparingBoth);
 		
 		
 ---------------------------------------------------------------------------------------------------------------------		
