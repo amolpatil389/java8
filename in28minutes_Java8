@@ -136,12 +136,32 @@ List<Course> newList = courses.stream().map(
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-allMatch(),noneMatch and anyMatch ask chatGPT
+allMatch(),noneMatch, findFirst,findAny,anyMatch,max,min,count ask chatGPT
 
 
 
-asd
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Max = Max will return Last element of the List
+
+
+		Comparator<Course02> usingMAX = Comparator.comparing(Course02::getNoOfStudent)
+				.thenComparing(Course02::getReviewScore);
+
+		Optional<Course02> optionalMAX = courses.stream().max(usingMAX);
+
+		System.out.println(optionalMAX);
+
+
+Min = Min will return First element of the List
+
+
+		Comparator<Course02> usingMIN = Comparator.comparing(Course02::getNoOfStudent)
+				.thenComparing(Course02::getReviewScore);
+
+		Optional<Course02> optionalMIN = courses.stream().max(usingMIN);
+
+		System.out.println(optionalMIN);
 
 -------------------------------------------
 sucessfactorLink : https://sf-wz-prd-p2-4snxii8t.workzonehr.cfapps.us10.hana.ondemand.com/site
