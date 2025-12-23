@@ -1,0 +1,86 @@
+package java8;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+public class First {
+
+	public static void main(String[] args) {
+		
+		String abc = "AMOL";
+		
+		List<Integer> numbers = Arrays.asList(12, 9, 13, 4, 6, 2, 4, 12, 15);
+		
+		List<String> courses = Arrays.asList("Spring", "Spring Boot", "API" , "Microservices","AWS", "PCF","Azure", "Docker", "Kubernetes");
+		
+		System.out.println("*************************Square of EVEN number***************************************************");
+		
+		
+		numbers.stream().filter(x->x%2==0).forEach(System.out::println);
+		
+		courses.stream().filter(x->x.contains("S")).forEach(System.out::println);
+		
+		System.out.println("****************************************************************************");
+		
+		courses.stream().forEach(System.out::println);
+		
+		System.out.println("=====Print Courses Whose Name has atleast 4 letters========");
+		
+		courses.stream().filter(x->x.length()>=4).forEach(System.out::println);
+		
+		System.out.println("=====Print the cubes of odd number========");
+		
+		System.out.println("======Odd Numbers====");
+		
+		List<Integer> oddNumber =  numbers.stream().filter(x->x%2!=0).map(x->x*x*x).collect(Collectors.toList());
+		
+		System.out.println(oddNumber);
+		
+		System.out.println("=====ODD=====");
+		
+		//numbers.stream().filter(x->x%2!=0).map(x->x*x*x).forEach(System.out::println); 
+		
+		numbers.stream().map(x->x*x*x).forEach(System.out::println);
+		
+		System.out.println("===========Length of Each Character ===============");
+		
+		courses.stream().map(x->x+" "+x.length()).forEach(System.out::println);
+		
+		System.out.println("===========Reduce Operator=================");
+		
+		int a = numbers.stream()
+						.reduce(0,(x,y)->x+y);
+		
+		System.out.println(a);
+		
+		
+		System.out.println("============SUM of ODD Numbers==============");
+		
+		StringBuffer sb = new StringBuffer();
+		
+		System.out.println("============Square==============");
+		
+		int square = numbers.stream().map(x->x*x).sorted(Comparator.reverseOrder()).distinct().reduce(0, Integer::sum);
+		
+		System.out.println("square = "+square);
+		
+		//int b = square.stream().reduce(0, Integer::sum);
+		
+		//System.out.println(b);
+		
+		Optional square_addition = numbers.stream().filter(x->x%2==0).reduce(Integer::min);
+		
+		System.out.println(square_addition);
+		
+		System.out.println("******************Square every number in a list and find the sum of squares*******************************");
+		
+		
+		
+
+		  
+	}
+
+}
