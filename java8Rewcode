@@ -383,3 +383,17 @@ APIC Flow
 Rewards API is there --->  APIC calls it ---------> All configuration such as encription is done ------------>that is send to java Adapter side --------> Adapter gives call to UI Angular
 
 -------------------------------------------------------------------------------------------------------------------------
+
+kibana
+In Kibana we use to provide query and timestamp to get the application logs
+
+yono-audit-logs
+application-logs
+
+Kafka Query
+QUERY:Kafka.Adapter:"LifeInsuranceAdapter" AND Kafka.SubComponent:"saveNBPolicyDetail"
+TimeStamp: 5th March 2025
+Kafka.Component:"getSearchJsonDataV2"
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Deployment
