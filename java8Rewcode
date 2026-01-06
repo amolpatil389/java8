@@ -335,3 +335,5 @@ Service
 Mobile UI ----> Adapter ----> IIB ---> EIS ---->CLOudant OR MONGO OR CBS
 
   Sometimes IIB to Cloudant directly OR IIB to CBS also
+
+sbLog.append("\n").append("response: ").append(gson.toJson(response));
