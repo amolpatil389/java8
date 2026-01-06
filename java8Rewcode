@@ -1,0 +1,337 @@
+API Call
+
+  FileName : RewardsAdapterResource
+  
+  @ApiOperation(value = "To get Upcoming Expiry Summary", notes = "getUpcomingExpirySummary", response =GetUpcomingExpirySummaryResponse .class)
+	@POST
+	@Consumes({ MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/get-upcoming-expiry-summary")	
+	public GetUpcomingExpirySummaryResponse getUpcomingExpirySummary(GetUpcomingExpirySummaryRequest request, @Context HttpHeaders headers)throws RewardsException
+	{
+		GetUpcomingExpirySummaryResponse response=new GetUpcomingExpirySummaryResponse();
+		Gson gson =new Gson();
+		UserDetail userDetail = baseResource.getUserSession(headers);
+		try{
+			response = service.getUpcomingExpirySummary(request, userDetail);
+		}
+		catch (RewardsException e) {
+
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "getUpcomingExpirySummary", userDetail, "", gson.toJson(response), LogType.REWARDS_API_ERROR.toString(), e, "");
+			response.setResponseCode(MessageConstant.FAILURE_REPONSE_CODE);
+			response.setResponseMessage(MessageConstant.EXCEPTION_MESSAGE);
+		} finally {
+			lotusLogger.log(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "getUpcomingExpirySummary", userDetail, "", gson.toJson(response), LogType.REWARDS_API_LOG.toString(), "");
+		}
+		return response;	
+	}
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  Service File : RewardsServiceImpl
+
+  public GetUpcomingExpirySummaryResponse getUpcomingExpirySummary(GetUpcomingExpirySummaryRequest request,
+			UserDetail user) throws RewardsException {
+		GetUpcomingExpirySummaryResponse response = new GetUpcomingExpirySummaryResponse();
+		Gson gson = new Gson();
+		StringBuilder sbLog = new StringBuilder();
+
+		try {
+			String requestParams = "ID001" + AppConstant.DELIMITER + getSHA(user.getCif());
+			sbLog.append("\n").append("requestParams: ").append(requestParams);
+
+			RestClient client = new RestClient(ServiceConstant.REWARDS_UPCOME_EXPIRY);
+			client.AddHeader(AppConstant.LR_API_CODE, ServiceConstant.LR_API_CODE_VAL);
+			client.AddHeader(AppConstant.LR_API_PASS, ServiceConstant.LR_API_PASS_VAL);
+			client.AddHeader(ApplicationConstant.CONTENT_TYPE_HEADER, "application/text");
+			client.AddHeader("X-IBM-Client-Id", ServiceConstant.CLIENT_ID);
+			client.setSoTimeOut(AppConstant.UPCOMINGEXPIRY_SUMMARY_TIMEOUT);
+
+			// Encryption & Decryption
+			AESEncryptDecryptUtil aes256Util = new AESEncryptDecryptUtil(256, 1000);
+			String encryParam = aes256Util.encrypt(ServiceConstant.REWARDS_KEY, ServiceConstant.REWARDS_IV,
+					requestParams);
+			sbLog.append("\n").append("encryParam: ").append(encryParam);
+
+			client.setPostData(encryParam);
+			client.execute(RequestMethod.POST);
+			String strResponse = client.getResponse();
+			sbLog.append("\n").append("strResponse: ").append(strResponse);
+
+			String decryParam = aes256Util.decrypt(ServiceConstant.REWARDS_KEY, ServiceConstant.REWARDS_IV,
+					strResponse);
+			sbLog.append("\n").append("decrypted response: ").append(decryParam);
+
+			if (decryParam.isEmpty() || decryParam.equalsIgnoreCase("null") || decryParam.equalsIgnoreCase(null)) {
+				sbLog.append("\n").append("response is null or empty ");
+
+				response.setData(null);
+				response.setResponseCode(AppConstant.DATA_NOT_FOUND_CODE);
+				response.setResponseMessage("UpcomingExpirySummary : " + AppConstant.DATA_NOT_FOUND_MESSAGE);
+				sbLog.append("\n").append("response: ").append(gson.toJson(response));
+				return response;
+			}
+
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+			factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+			
+			factory.setValidating(true);
+			factory.setFeature(ServiceConstant.DOCTYPE_SECURITY_URL, true);
+			DocumentBuilder builder;
+			org.w3c.dom.Document doc;
+			InputSource inputSource = new InputSource();
+			inputSource.setCharacterStream(new StringReader(decryParam));
+
+			builder = factory.newDocumentBuilder();
+			doc = builder.parse(inputSource);
+			sbLog.append("\n").append("document: ").append(String.valueOf(doc));
+			String code = doc.getElementsByTagName(AppConstant.CODE).item(0).getTextContent();
+			sbLog.append("\n").append("code: ").append(String.valueOf(code));
+			GetUpcomingExpirySummaryResponseDataType upcomingExpirySummaryResponseDataType = new GetUpcomingExpirySummaryResponseDataType();
+			if (code.equals("100")) {
+				String result = doc.getElementsByTagName(AppConstant.TAG).item(0).getTextContent();
+				sbLog.append("\n").append("result: ").append(String.valueOf(result));
+
+				if (!"null".equals(String.valueOf(result)) && !String.valueOf(result).equalsIgnoreCase(null)
+						&& !String.valueOf(result).isEmpty()) {
+
+					String[] resultDetails = result.split("\\|");
+					sbLog.append("\n").append("result is not empty: ");
+					if (resultDetails.length > 0) {
+						for (String resultArray : resultDetails) {
+							String[] hashSplit = resultArray.split("\\#");
+							if (hashSplit.length > 0) {
+								GetExpiryDatePointType expiryDatePointType = new GetExpiryDatePointType();
+								expiryDatePointType.setCustomerID(hashSplit[0]);
+								expiryDatePointType.setStatus(hashSplit[1]);
+								
+								sbLog.append("\n").append("hashSplit[2]: ").append(String.valueOf(hashSplit[2]));
+
+								if (!String.valueOf(hashSplit[2]).trim().equalsIgnoreCase("N.A."))
+								{
+									expiryDatePointType.setExpiryDate("01 JAN 1970");
+								}
+								else
+								{
+							
+								expiryDatePointType.setExpiryDate(
+									new SimpleDateFormat("dd MMM yyyy").format(new Date(hashSplit[2])));
+									
+									sbLog.append("\n").append("GetExpiryDatePointType: "+expiryDatePointType);
+									sbLog.append("\n").append("expiryDate: "+expiryDatePointType.getExpiryDate());
+								}
+
+								expiryDatePointType.setExpiryPoint(hashSplit[3]);
+								upcomingExpirySummaryResponseDataType.getExpiryDatePoints().add(expiryDatePointType);
+								sbLog.append("\n").append("GetExpiryDatePointType2: "+expiryDatePointType);
+							}
+						}
+					}
+					upcomingExpirySummaryResponseDataType.setUrl(ServiceConstant.REWARDS_M_MOBILE_URL);
+					response.setData(upcomingExpirySummaryResponseDataType);
+					response.setResponseCode(AppConstant.SUCCESS_RESPONSE_CODE);
+					response.setResponseMessage(AppConstant.SUCCESS_RESPONSE_MESSAGE);
+
+				} else if ("null".equals(String.valueOf(result)) || String.valueOf(result).isEmpty()
+						|| String.valueOf(result).equalsIgnoreCase(null)) {
+					GetExpiryDatePointType expiryDatePointType = new GetExpiryDatePointType();
+
+					expiryDatePointType.setExpiryPoint("0");
+					upcomingExpirySummaryResponseDataType.getExpiryDatePoints().add(expiryDatePointType);
+
+					upcomingExpirySummaryResponseDataType.setUrl(ServiceConstant.REWARDS_M_MOBILE_URL);
+					response.setData(upcomingExpirySummaryResponseDataType);
+					response.setResponseCode(AppConstant.SUCCESS_RESPONSE_CODE);
+					response.setResponseMessage(AppConstant.SUCCESS_RESPONSE_MESSAGE);
+				} else {
+					response.setData(null);
+					response.setResponseCode(AppConstant.DATA_NOT_FOUND_CODE);
+					response.setResponseMessage(AppConstant.DATA_NOT_FOUND_MESSAGE);
+					sbLog.append("\n").append("response: ").append(String.valueOf(AppConstant.DATA_NOT_FOUND_MESSAGE));
+
+				}
+				sbLog.append("\n").append("response: ").append(gson.toJson(response));
+
+			} else {
+
+				String errorMessage = doc.getElementsByTagName(AppConstant.ERROR_TAG).item(0).getTextContent();
+
+				response.setResponseCode(AppConstant.RESPONSECODE_FAILURE);
+				response.setResponseMessage(code + " : " + errorMessage);
+
+				
+			}
+			doc = null;
+		} catch (CommonException | IOException | ParserConfigurationException | SAXException e) {
+			sbLog.append("\n").append("exception occurs: ").append(String.valueOf(e.getMessage()));
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "UpcomingExpirySummary",
+					user, gson.toJson(request), gson.toJson(response),
+					LogType.REWARDS_ERROR_LOG.toString() + "\n" + sbLog.toString(), e, "");
+			throw new RewardsException("Exception in: UpcomingExpirySummary" + e.getMessage());
+		} catch (Exception e) {
+			sbLog.append("\n").append("exception occurs: ").append(String.valueOf(e.getMessage()));
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "UpcomingExpirySummary",
+					user, gson.toJson(request), gson.toJson(response),
+					LogType.REWARDS_ERROR_LOG.toString() + "\n" + sbLog.toString(), e, "");
+			throw new RewardsException("Exception in: UpcomingExpirySummary" + e.getMessage());
+		} finally {
+			lotusLogger.audit(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "UpcomingExpirySummary",
+					new UserDetail(), gson.toJson(request), gson.toJson(response), sbLog.toString(), "", "", "", "",
+					String.valueOf(response.getResponseMessage()));
+
+		}
+	
+		return response;
+	}
+
+---------------------------------------------------------------------------------------------------
+
+  Another Sample API and Service method for reference
+
+  REST
+
+  @ApiOperation(value = "To get Points Summary", notes = "getPointsSummary", response =GetPointSummaryResponse.class)
+	@POST
+	@Consumes({ MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/get-points-summary")	
+	public GetPointSummaryResponse getPointsSummary(GetPointSummaryRequest request, @Context HttpHeaders headers)throws RewardsException, CommonException, IOException
+	{
+		GetPointSummaryResponse response=new GetPointSummaryResponse();
+		Gson gson =new Gson();
+		UserDetail userDetail = baseResource.getUserSession(headers);
+		//TODO
+		StringBuilder sbLog = new StringBuilder();
+		DynamicCacheUtil cacheUtil = new DynamicCacheUtil();
+		try{
+			//TODO
+			String securityContext = baseResource.getCacheKey(headers);
+			sbLog.append("\n").append("sctx: ").append(securityContext);
+			Object cacheValue = cacheUtil.getFromCache(securityContext, DynamicCacheUtil.KEY_LOGGED_IN);
+			if(cacheValue == null) {
+				sbLog.append("\n").append("CacheValue: null");
+			}else {
+				sbLog.append("\n").append("CacheValue: ").append(gson.toJson((HashMap<String, Object>)cacheValue));
+			}
+			response=service.getPointSummary(request,userDetail);
+		}
+		catch (RewardsException e) {
+
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "getPointsSummary", userDetail, "", gson.toJson(response), LogType.REWARDS_API_ERROR.toString(), e, "");
+			response.setResponseCode(MessageConstant.FAILURE_REPONSE_CODE);
+			response.setResponseMessage(MessageConstant.EXCEPTION_MESSAGE);
+		} finally {
+			lotusLogger.log(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "getPointsSummary", userDetail, "", gson.toJson(response), LogType.REWARDS_API_LOG.toString(), "");
+		}
+		return response;	
+	}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Service
+
+  public GetPointSummaryResponse getPointSummary(GetPointSummaryRequest request, UserDetail user)
+			throws RewardsException {
+		GetPointSummaryResponse response = new GetPointSummaryResponse();
+		Gson gson = new Gson();
+		StringBuilder sbLog = new StringBuilder();
+		try {
+			String params = "ID001" + AppConstant.DELIMITER + getSHA(user.getCif());
+			RestClient client = new RestClient(ServiceConstant.REWARDS_POINT_SUMMARY);
+			client.AddHeader(AppConstant.LR_API_CODE, ServiceConstant.LR_API_CODE_VAL);
+			client.AddHeader(AppConstant.LR_API_PASS, ServiceConstant.LR_API_PASS_VAL);
+			client.AddHeader(ApplicationConstant.CONTENT_TYPE_HEADER, "application/text");
+			client.AddHeader("X-IBM-Client-Id", ServiceConstant.CLIENT_ID);  
+			client.setSoTimeOut(AppConstant.ACC_POINTS_SUMMARY_TIMEOUT);
+
+			
+			sbLog.append("\n").append("Request before encryption: ").append(params); 
+			AESEncryptDecryptUtil aes256Util = new AESEncryptDecryptUtil(256, 1000);
+			String encryParam = aes256Util.encrypt(ServiceConstant.REWARDS_KEY, ServiceConstant.REWARDS_IV, params);
+			sbLog.append("\n").append("encryParam: ").append(encryParam);
+			client.setPostData(encryParam);
+			client.execute(RequestMethod.POST);
+			String strResponse = client.getResponse();
+			String decryParam = aes256Util.decrypt(ServiceConstant.REWARDS_KEY, ServiceConstant.REWARDS_IV,
+					strResponse); 
+			sbLog.append("\n").append("decryParam: ").append(decryParam);
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+			factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+			
+			factory.setValidating(true);
+			factory.setFeature(ServiceConstant.DOCTYPE_SECURITY_URL, true);
+			DocumentBuilder builder;
+			org.w3c.dom.Document doc;
+			InputSource inputSource = new InputSource();
+			inputSource.setCharacterStream(new StringReader(decryParam));
+			builder = factory.newDocumentBuilder();
+			doc = builder.parse(inputSource);
+			String code = doc.getElementsByTagName(AppConstant.CODE).item(0).getTextContent();
+			GetPointSummaryResponseDataType dataType = new GetPointSummaryResponseDataType();
+			if (code.equals("100")) {
+				String result = doc.getElementsByTagName(AppConstant.TAG).item(0).getTextContent();
+				if (!"null".equals(String.valueOf(result)) && !String.valueOf(result).equalsIgnoreCase(null)
+						&& !String.valueOf(result).isEmpty()) {
+					String[] resultArray = new String[7];
+
+					if (result != null && !result.isEmpty()) {
+						resultArray = result.split(AppConstant.DELIMITER);
+					}
+					if (resultArray.length > 0) {
+						dataType.setCustomerID(resultArray[0]);
+						dataType.setStatus(resultArray[1]);
+						dataType.setPoints(resultArray[2]);
+						dataType.setTotalAccruedPoints(resultArray[3]);
+						dataType.setTotalRedeemedPoints(resultArray[4]);
+						dataType.setTotalExpiredPoints(resultArray[5]);
+						dataType.setRegistrationStatus(resultArray[6]);
+						dataType.setUrl(ServiceConstant.REWARDS_M_MOBILE_URL);
+						response.setData(dataType);
+					}
+					response.setResponseCode(AppConstant.SUCCESS_RESPONSE_CODE);
+					response.setResponseMessage(AppConstant.SUCCESS_RESPONSE_MESSAGE);
+				} else if ("null".equals(String.valueOf(result)) || String.valueOf(result).isEmpty()
+						|| String.valueOf(result).equalsIgnoreCase(null)) {
+					dataType.setCustomerID("");
+					dataType.setStatus("");
+					dataType.setPoints("0");
+					dataType.setTotalAccruedPoints("");
+					dataType.setTotalRedeemedPoints("");
+					dataType.setTotalExpiredPoints("");
+					dataType.setRegistrationStatus("");
+					dataType.setUrl(ServiceConstant.REWARDS_M_MOBILE_URL);
+					response.setData(dataType);
+					response.setResponseCode(AppConstant.SUCCESS_RESPONSE_CODE);
+					response.setResponseMessage(AppConstant.SUCCESS_RESPONSE_MESSAGE);
+				} else {
+					response.setData(null);
+					response.setResponseCode(AppConstant.DATA_NOT_FOUND_CODE);
+					response.setResponseMessage(AppConstant.DATA_NOT_FOUND_MESSAGE);
+				}
+			} else {
+				response.setResponseCode(AppConstant.RESPONSECODE_FAILURE);
+				response.setResponseMessage(AppConstant.FAILURE_RESPONSE_MESSAGE);
+			}
+			doc = null;
+		} catch (CommonException | IOException | ParserConfigurationException | SAXException e) {
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "PointsSummary",
+					user, gson.toJson(request), gson.toJson(response), LogType.REWARDS_ERROR_LOG.toString(),
+					e, "");
+
+			throw new RewardsException("Exception in: PointsSummary" + e.getMessage());
+		} catch (Exception e) {
+			lotusLogger.exception(ServiceConstant.ADAPTER_NAME, this.getClass().getName(), "PointsSummary",
+					user, gson.toJson(request), gson.toJson(response), LogType.REWARDS_ERROR_LOG.toString(),
+					e, "");
+
+			throw new RewardsException("Exception in: PointsSummary" + e.getMessage());
+		} finally {
+			lotusLogger.audit("RewardsAdapter", "", "PointsSummary", user, "", gson.toJson(response), sbLog.toString(),
+					"", "", "", "", String.valueOf(response.getResponseMessage()));
+		}
+		return response;
+	}
+
+Mobile UI ----> Adapter ----> IIB ---> EIS ---->CLOudant OR MONGO OR CBS
+
+  Sometimes IIB to Cloudant directly OR IIB to CBS also
