@@ -337,3 +337,49 @@ Mobile UI ----> Adapter ----> IIB ---> EIS ---->CLOudant OR MONGO OR CBS
   Sometimes IIB to Cloudant directly OR IIB to CBS also
 
 sbLog.append("\n").append("response: ").append(gson.toJson(response));
+
+
+---------------------------------------------------------------------------------------------
+
+Now there is service.constant file
+
+1. public static final String REWARDS_M_MOBILE_URL = getProperty("REWARDZ_MOBILE_URL");
+
+2. 	public static final String PROPERTIES_FILE_DIR = "/yono/mfp/properties/";
+	public static final String PROPERTIES_FILE_NAME = "rewards.properties";
+
+3.This rewards.properties will be seperate file where all links will be present
+
+rewards.properties file :
+
+REWARDZ_MOBILE_URL=https://rewardz.sbi.bank.in/
+REWARDS_ACC_SUMMARY_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/accountSummary
+REWARDS_MINI_STMT_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/miniStatement
+REWARDS_ACC_DT_STMT_SUMMARY_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/accountStmtDtRange
+REWARDS_POINT_SUMMARY_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/pointSummary
+REWARDS_UPCOME_EXPIRY_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/upcomingExpirySummary
+GENERATE_TOKEN_URL=https://yono-apigw.sbiuat.bank.in/sbi-apic-uat/sb/loyltyrewardz/generateToken
+
+
+
+
+LR_API_CODE_VAL=LRSBI
+LR_API_PASS_VAL=LRTEST
+PROXY_URL=10.0.228.80
+
+CLIENT_ID=9f7f01ee-f91b-4d71-aefe-3812dbd8f991
+
+LR_API_CODE_VALUE=TestLrApiCode
+LR_API_PASS_VALUE=TestLrApiPassword
+
+loyaltyRewards_data=V2k71Cd/kLKhP7EjpTrZ2EFPUGIO6BEh3NAZRYeZ+l0=
+loyaltyRewards_info=mAOu+sfBZNBn3mJ52QCa04gwE0dgZn9aDXqntT0oaso=
+
+REWARDS_Adaptor=RewardsAdapter
+
+------------------------------------------------------------------------------------------------------------------------
+
+APIC Flow
+Rewards API is there --->  APIC calls it ---------> All configuration such as encription is done ------------>that is send to java Adapter side --------> Adapter gives call to UI Angular
+
+-------------------------------------------------------------------------------------------------------------------------
